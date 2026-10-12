@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ELI5 노트</title>
+<style>
+  /* 레이아웃: 분야별 섹션 + 노트 링크 목록의 단일 컬럼. 토큰은 llm.html과 같은 팔레트를 쓴다. */
+  *,*::before,*::after{ box-sizing:border-box; }
+  html,body,h1,h2,h3,p,ul,li,dd{ margin:0; padding:0; }
+  ul{ list-style:none; }
+  dd{ margin-inline-start:0; }
+
+  :root{
+    --paper:#F1F4F8; --surface:#FFFFFF; --surface-2:#E6EBF2;
+    --ink:#10151F; --ink-2:#47505F; --ink-3:#6E7787; --line:#D5DBE5;
+    --accent:#1E4FE0; --accent-ink:#FFFFFF; --accent-soft:#DCE5FD;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --paper:#0E121A; --surface:#161B26; --surface-2:#1F2633;
+      --ink:#EEF1F6; --ink-2:#A9B1BF; --ink-3:#7C8596; --line:#2A3342;
+      --accent:#7C9CFF; --accent-ink:#0E121A; --accent-soft:#1E2C57;
+      color-scheme:dark;
+    }
+  }
+
+  body{
+    background:var(--paper); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Noto Sans KR",system-ui,sans-serif;
+    font-size:17px; line-height:1.65; letter-spacing:-.012em; word-break:keep-all;
+  }
+  :focus-visible{ outline:3px solid var(--accent); outline-offset:3px; }
+
+  .wrap{ max-width:760px; margin:0 auto; padding:56px 20px 96px; display:flex; flex-direction:column; gap:56px; }
+  .eyebrow{ font-size:12px; font-weight:700; letter-spacing:.14em; color:var(--ink-3); text-transform:uppercase; }
+  h1{ font-size:clamp(32px,6.4vw,48px); line-height:1.14; font-weight:800; letter-spacing:-.035em; text-wrap:balance; }
+  h1 em{ font-style:normal; color:var(--accent); }
+  .lead{ color:var(--ink-2); margin-top:14px; max-width:34em; }
+
+  .group{ display:flex; flex-direction:column; gap:14px; }
+  .ghead{ display:flex; align-items:baseline; gap:12px; padding-bottom:10px; border-bottom:1px solid var(--line); }
+  h2{ font-size:22px; font-weight:800; letter-spacing:-.03em; }
+  .ghead span{ font-size:14px; color:var(--ink-3); }
+
+  .notes{ display:flex; flex-direction:column; gap:10px; }
+  .note{ display:flex; flex-direction:column; gap:2px; padding:16px 20px; background:var(--surface);
+         border:1px solid var(--line); border-radius:14px; color:inherit; text-decoration:none; }
+  .note:hover{ border-color:var(--accent); }
+  .note b{ font-size:18px; letter-spacing:-.02em; }
+  .note span{ font-size:15px; color:var(--ink-2); }
+  .note small{ font-size:13px; color:var(--ink-3); }
+  .empty{ font-size:15px; color:var(--ink-3); padding:4px 2px; }
+
+  @media (max-width:560px){ .wrap{ padding-top:36px; gap:44px; } }
+</style>
+</head>
+<body>
+
+<main class="wrap">
+
+  <header>
+    <p class="eyebrow">eli5-notes</p>
+    <h1>어려운 개념을<br><em>쉽게</em> 정리한 노트</h1>
+    <p class="lead">비유와 그림으로 먼저 이해하고, 아래쪽에서 실제 동작 원리까지 봅니다.</p>
+  </header>
+
+  <!-- 노트를 추가하면 해당 분야의 .notes 안에 <a class="note"> 를 한 줄 넣고, 비어 있던 분야는 .empty 를 지운다. -->
+
+  <section class="group" id="ai">
+    <div class="ghead"><h2>AI</h2><span>AI · ML · LLM 개념과 흐름</span></div>
+    <div class="notes">
+      <a class="note" href="ai/llm.html">
+        <b>LLM이 뭐야</b>
+        <span>글을 엄청 읽고 다음 말을 맞히는 기계. 토큰화에서 글자 복원까지의 데이터 흐름</span>
+        <small>ai/llm.html</small>
+      </a>
+    </div>
+  </section>
+
+  <section class="group" id="fe">
+    <div class="ghead"><h2>프론트엔드</h2><span>브라우저 · 렌더링 · React · CSS</span></div>
+    <div class="notes"><p class="empty">아직 노트가 없어요.</p></div>
+  </section>
+
+  <section class="group" id="be">
+    <div class="ghead"><h2>백엔드</h2><span>API · DB · 인증 · 캐시</span></div>
+    <div class="notes"><p class="empty">아직 노트가 없어요.</p></div>
+  </section>
+
+  <section class="group" id="infra">
+    <div class="ghead"><h2>인프라</h2><span>클라우드 · 컨테이너 · 네트워크 · CI/CD</span></div>
+    <div class="notes"><p class="empty">아직 노트가 없어요.</p></div>
+  </section>
+
+  <section class="group" id="cs-general">
+    <div class="ghead"><h2>CS 기초</h2><span>자료구조 · 운영체제 · 보안 일반</span></div>
+    <div class="notes"><p class="empty">아직 노트가 없어요.</p></div>
+  </section>
+
+</main>
+
+</body>
+</html>
