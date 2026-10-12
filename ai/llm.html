@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LLM이 뭐야</title>
+<style>
+  /* 레이아웃: 큰 그림 한 장 + 한두 줄 설명이 세로로 이어지는 단일 컬럼. 단계 1-2-3은 실제 순서다. */
+  *,*::before,*::after{ box-sizing:border-box; }
+  html,body,h1,h2,h3,h4,p,dl,dt,dd,ol,ul,figure,blockquote{ margin:0; padding:0; }
+  ol,ul{ list-style:none; }
+  dd{ margin-inline-start:0; }
+  button,input,select,textarea{ font:inherit; color:inherit; }
+  img,svg{ display:block; max-width:100%; }
+
+  :root{
+    --paper:#F1F4F8;
+    --surface:#FFFFFF;
+    --surface-2:#E6EBF2;
+    --ink:#10151F;
+    --ink-2:#47505F;
+    --ink-3:#6E7787;
+    --line:#D5DBE5;
+    --accent:#1E4FE0;
+    --accent-ink:#FFFFFF;
+    --accent-soft:#DCE5FD;
+    --warn:#B4531A;
+    --warn-soft:#F8E3D3;
+    --ok:#1B7A4B;
+    --ok-soft:#D7F0E1;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --paper:#0E121A; --surface:#161B26; --surface-2:#1F2633;
+      --ink:#EEF1F6; --ink-2:#A9B1BF; --ink-3:#7C8596;
+      --line:#2A3342;
+      --accent:#7C9CFF; --accent-ink:#0E121A; --accent-soft:#1E2C57;
+      --warn:#F0A06B; --warn-soft:#3A2517;
+      --ok:#6FD6A0; --ok-soft:#173226;
+      color-scheme:dark;
+    }
+  }
+
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Noto Sans KR",system-ui,sans-serif;
+    font-size:17px; line-height:1.65; letter-spacing:-.012em;
+    word-break:keep-all;
+  }
+  :focus-visible{ outline:3px solid var(--accent); outline-offset:3px; }
+
+  .wrap{ max-width:760px; margin:0 auto; padding:56px 20px 96px; display:flex; flex-direction:column; gap:72px; }
+  .eyebrow{ font-size:12px; font-weight:700; letter-spacing:.14em; color:var(--ink-3); text-transform:uppercase; }
+  h1{ font-size:clamp(34px,7vw,56px); line-height:1.14; font-weight:800; letter-spacing:-.035em; text-wrap:balance; }
+  h1 em{ font-style:normal; color:var(--accent); }
+  h2{ font-size:clamp(24px,4.6vw,32px); line-height:1.25; font-weight:800; letter-spacing:-.03em; text-wrap:balance; }
+  p{ color:var(--ink-2); max-width:34em; }
+  .lead{ font-size:clamp(18px,2.6vw,21px); color:var(--ink-2); }
+
+  .step{ display:flex; flex-direction:column; gap:20px; }
+  .stephead{ display:flex; align-items:center; gap:12px; }
+  .badge{ flex:none; width:34px; height:34px; border-radius:50%; background:var(--accent); color:var(--accent-ink);
+          display:grid; place-items:center; font-weight:800; font-size:16px; }
+  .stephead .eyebrow{ color:var(--accent); }
+
+  .art{ background:var(--surface); border:1px solid var(--line); border-radius:20px; padding:24px; }
+  .art svg{ width:100%; height:auto; }
+  .t{ fill:var(--ink); font-family:inherit; }
+  .t2{ fill:var(--ink-2); font-family:inherit; }
+  .t3{ fill:var(--ink-3); font-family:inherit; }
+  .st-line{ stroke:var(--ink-3); fill:none; stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; }
+
+  /* 데모 */
+  .demo{ background:var(--surface); border:1px solid var(--line); border-radius:20px; padding:24px; display:flex; flex-direction:column; gap:20px; }
+  .sentence{ font-size:clamp(22px,4.4vw,30px); font-weight:700; letter-spacing:-.03em; line-height:1.4; min-height:2.8em; }
+  .sentence .w{ color:var(--ink); }
+  .sentence .blank{ display:inline-block; min-width:2.4em; border-bottom:3px dashed var(--accent); color:var(--accent); text-align:center; }
+  .opts{ display:flex; flex-direction:column; gap:10px; }
+  .opt{ position:relative; display:flex; justify-content:space-between; align-items:center; gap:12px;
+        text-align:left; width:100%; padding:12px 16px; border:1px solid var(--line); border-radius:12px;
+        background:var(--surface-2); cursor:pointer; overflow:hidden; font-weight:600; font-size:17px; }
+  .opt .bar{ position:absolute; inset:0 auto 0 0; background:var(--accent-soft); z-index:0; }
+  .opt span{ position:relative; z-index:1; }
+  .opt .pct{ font-variant-numeric:tabular-nums; color:var(--ink-2); font-weight:700; }
+  .opt:hover{ border-color:var(--accent); }
+  .done{ display:flex; flex-wrap:wrap; align-items:center; gap:12px; }
+  .done strong{ color:var(--ok); }
+  .reset{ border:1px solid var(--line); background:var(--surface-2); border-radius:999px; padding:8px 18px; cursor:pointer; font-weight:700; }
+  .reset:hover{ border-color:var(--accent); }
+  .hint{ font-size:14px; color:var(--ink-3); }
+
+  /* 점 격자 */
+  .dots{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .dotcard{ background:var(--surface-2); border-radius:14px; padding:16px; display:flex; flex-direction:column; gap:10px; min-width:0; }
+  .dotcard b{ font-size:15px; }
+  .dotcard small{ color:var(--ink-3); font-size:13px; }
+  .dotcard svg{ width:100%; height:auto; }
+
+  /* 두 장 카드 */
+  .pair{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .qa{ border-radius:20px; padding:22px; display:flex; flex-direction:column; gap:14px; min-width:0; }
+  .qa.good{ background:var(--ok-soft); }
+  .qa.bad{ background:var(--warn-soft); }
+  .qa .q{ font-size:15px; color:var(--ink-2); }
+  .qa .a{ font-size:22px; font-weight:800; letter-spacing:-.03em; line-height:1.3; }
+  .qa .tag{ font-size:13px; font-weight:800; }
+  .qa.good .tag{ color:var(--ok); }
+  .qa.bad .tag{ color:var(--warn); }
+  .qa .why{ font-size:15px; color:var(--ink-2); }
+
+  .sum{ background:var(--accent); color:var(--accent-ink); border-radius:24px; padding:32px 28px; display:flex; flex-direction:column; gap:12px; }
+  .sum .eyebrow{ color:var(--accent-ink); opacity:.75; }
+  .sum p{ color:var(--accent-ink); font-size:clamp(22px,4.4vw,30px); font-weight:800; line-height:1.35; letter-spacing:-.03em; max-width:none; }
+  .rel{ display:flex; flex-wrap:wrap; gap:8px; }
+  .rel span{ border:1px solid var(--line); background:var(--surface); border-radius:999px; padding:6px 14px; font-size:14px; color:var(--ink-2); }
+  .relbox{ display:flex; flex-direction:column; gap:12px; }
+
+  /* 기술 흐름 */
+  .mono{ font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace; font-size:15px !important; font-weight:700; }
+  .flow{ display:flex; flex-direction:column; gap:0; }
+  .node{ position:relative; display:grid; grid-template-columns:34px minmax(0,1fr); gap:16px; padding-bottom:22px; }
+  .node:last-child{ padding-bottom:0; }
+  .node:not(:last-child)::before{ content:""; position:absolute; left:16px; top:36px; bottom:2px; width:2px; background:var(--line); }
+  .node .n{ width:34px; height:34px; border-radius:50%; background:var(--surface-2); border:2px solid var(--ink-3);
+            display:grid; place-items:center; font-weight:800; font-size:15px; position:relative; z-index:1; }
+  .node.core .n{ background:var(--accent); border-color:var(--accent); color:var(--accent-ink); }
+  .node .body{ background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:14px 18px; display:flex; flex-direction:column; gap:6px; min-width:0; }
+  .node.core .body{ border:2px solid var(--accent); }
+  .node .body b{ font-size:18px; letter-spacing:-.02em; }
+  .node .body small{ font-size:13px; font-weight:600; color:var(--ink-3); margin-left:6px; }
+  .node .body p{ font-size:15.5px; }
+  .node code{ display:block; align-self:flex-start; max-width:100%; overflow-x:auto; white-space:nowrap;
+              font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace; font-size:13.5px;
+              background:var(--surface-2); color:var(--ink); padding:6px 10px; border-radius:8px; }
+  .loopnote{ display:flex; gap:14px; align-items:center; background:var(--accent-soft); border-radius:16px; padding:16px 20px; }
+  .loopnote svg{ flex:none; width:40px; height:40px; }
+  .loopnote p{ color:var(--ink); max-width:none; font-size:16px; }
+
+  @media (max-width:560px){
+    .wrap{ padding-top:36px; gap:56px; }
+    .pair,.dots{ grid-template-columns:1fr; }
+    .art,.demo{ padding:16px; }
+  }
+  @media (prefers-reduced-motion:reduce){ *{ transition:none !important; animation:none !important; } }
+  .bar{ transition:width .35s ease; }
+</style>
+</head>
+<body>
+
+<main class="wrap">
+
+  <header class="step">
+    <p class="eyebrow">AI 용어 · LLM</p>
+    <h1>LLM은 다음에 올 말을<br><em>엄청 잘 맞히는</em> 기계예요</h1>
+    <p class="lead">챗GPT, 클로드, 제미나이 안에서 돌아가는 엔진이 LLM이에요. 하는 일은 딱 하나예요.</p>
+
+    <div class="art" role="img" aria-label="글을 많이 읽은 뒤 다음 말을 맞히는 기계가 문장을 이어 쓰는 그림">
+      <svg viewBox="0 0 640 200" aria-hidden="true">
+        <!-- 책 더미 -->
+        <g>
+          <rect x="30" y="140" width="130" height="24" rx="4" fill="var(--accent)"/>
+          <rect x="42" y="114" width="110" height="24" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2"/>
+          <rect x="24" y="88" width="120" height="24" rx="4" fill="var(--surface-2)" stroke="var(--ink-3)" stroke-width="2"/>
+          <rect x="38" y="62" width="104" height="24" rx="4" fill="var(--accent)" opacity=".55"/>
+          <text x="95" y="188" text-anchor="middle" class="t2" font-size="15" font-weight="700">글 아주 많이</text>
+        </g>
+        <path d="M185 110 H245" class="st-line"/><path d="M233 98 L247 110 L233 122" class="st-line"/>
+        <!-- 기계 -->
+        <g>
+          <rect x="262" y="52" width="116" height="104" rx="22" fill="var(--surface-2)" stroke="var(--ink)" stroke-width="3"/>
+          <circle cx="298" cy="94" r="9" fill="var(--ink)"/><circle cx="342" cy="94" r="9" fill="var(--ink)"/>
+          <circle cx="301" cy="91" r="3" fill="var(--surface)"/><circle cx="345" cy="91" r="3" fill="var(--surface)"/>
+          <path d="M296 126 Q320 140 344 126" class="st-line" stroke="var(--ink)"/>
+          <path d="M320 52 V34" class="st-line" stroke="var(--ink)"/><circle cx="320" cy="28" r="7" fill="var(--accent)"/>
+          <text x="320" y="188" text-anchor="middle" class="t2" font-size="15" font-weight="700">LLM</text>
+        </g>
+        <path d="M400 110 H460" class="st-line"/><path d="M448 98 L462 110 L448 122" class="st-line"/>
+        <!-- 말풍선 -->
+        <g>
+          <rect x="478" y="64" width="146" height="84" rx="18" fill="var(--accent)"/>
+          <path d="M500 148 L492 172 L522 148 Z" fill="var(--accent)"/>
+          <text x="551" y="98" text-anchor="middle" font-size="15" font-weight="700" fill="var(--accent-ink)" font-family="inherit">오늘 아침에</text>
+          <text x="551" y="124" text-anchor="middle" font-size="15" font-weight="700" fill="var(--accent-ink)" font-family="inherit">커피를 ___</text>
+          <text x="551" y="188" text-anchor="middle" class="t2" font-size="15" font-weight="700">다음 말 맞히기</text>
+        </g>
+      </svg>
+    </div>
+  </header>
+
+  <section class="step">
+    <div class="stephead"><span class="badge">1</span><span class="eyebrow">먼저</span></div>
+    <h2>사람이 쓴 글을 어마어마하게 읽어요</h2>
+    <p>책, 웹사이트, 뉴스, 대화, 코드까지요. 사람이 평생 읽을 양보다 훨씬 많아요.</p>
+    <div class="art" role="img" aria-label="책, 웹사이트, 대화, 코드 네 가지 글이 모이는 그림">
+      <svg viewBox="0 0 640 150" aria-hidden="true">
+        <g font-size="15" font-weight="700" text-anchor="middle" font-family="inherit">
+          <rect x="16" y="30" width="136" height="84" rx="16" fill="var(--surface-2)"/>
+          <path d="M60 52 h48 v44 h-48 z M84 52 v44" class="st-line"/>
+          <text x="84" y="132" class="t2">책</text>
+
+          <rect x="172" y="30" width="136" height="84" rx="16" fill="var(--surface-2)"/>
+          <rect x="198" y="52" width="84" height="44" rx="6" class="st-line"/><path d="M198 64 h84" class="st-line"/>
+          <text x="240" y="132" class="t2">웹사이트</text>
+
+          <rect x="328" y="30" width="136" height="84" rx="16" fill="var(--surface-2)"/>
+          <path d="M360 56 h72 a8 8 0 0 1 8 8 v16 a8 8 0 0 1 -8 8 h-40 l-14 12 v-12 h-18 a8 8 0 0 1 -8 -8 v-16 a8 8 0 0 1 8 -8z" class="st-line"/>
+          <text x="396" y="132" class="t2">대화</text>
+
+          <rect x="484" y="30" width="136" height="84" rx="16" fill="var(--surface-2)"/>
+          <path d="M538 56 l-18 18 l18 18 M566 56 l18 18 l-18 18" class="st-line"/>
+          <text x="552" y="132" class="t2">코드</text>
+        </g>
+      </svg>
+    </div>
+  </section>
+
+  <section class="step">
+    <div class="stephead"><span class="badge">2</span><span class="eyebrow">그다음</span></div>
+    <h2>“다음엔 어떤 말이 올까?”를 맞혀요</h2>
+    <p>읽다 보면 “이런 말 뒤에는 이런 말이 자주 와”라는 감이 생겨요. 가능한 말마다 확률을 매겨요. 아래에서 직접 골라 보세요.</p>
+
+    <div class="demo" id="demo">
+      <div class="sentence" id="sentence" aria-live="polite"></div>
+      <div class="opts" id="opts"></div>
+      <div class="done" id="done" hidden>
+        <strong>문장 완성!</strong>
+        <button class="reset" id="reset" type="button">처음부터 다시</button>
+      </div>
+      <p class="hint" id="hint">막대가 길수록 LLM이 “이 말이 올 가능성이 커”라고 본 거예요. 숫자는 예시예요.</p>
+    </div>
+  </section>
+
+  <section class="step">
+    <div class="stephead"><span class="badge">3</span><span class="eyebrow">마지막으로</span></div>
+    <h2>이걸 계속 반복하면 글이 돼요</h2>
+    <p>한 단어 맞히고, 그 단어를 붙이고, 또 맞혀요. 질문에 대답하고 글을 쓰고 코드를 짜는 것도 전부 이 반복이에요.</p>
+    <div class="art" role="img" aria-label="단어가 하나씩 이어 붙는 그림">
+      <svg viewBox="0 0 640 110" aria-hidden="true">
+        <g font-size="17" font-weight="700" text-anchor="middle" font-family="inherit">
+          <rect x="12" y="30" width="104" height="48" rx="12" fill="var(--accent)"/><text x="64" y="61" fill="var(--accent-ink)">오늘</text>
+          <rect x="132" y="30" width="104" height="48" rx="12" fill="var(--accent)"/><text x="184" y="61" fill="var(--accent-ink)">아침에</text>
+          <rect x="252" y="30" width="104" height="48" rx="12" fill="var(--accent)"/><text x="304" y="61" fill="var(--accent-ink)">커피를</text>
+          <rect x="372" y="30" width="104" height="48" rx="12" fill="var(--accent)"/><text x="424" y="61" fill="var(--accent-ink)">마셨다</text>
+          <rect x="492" y="30" width="136" height="48" rx="12" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2" stroke-dasharray="6 5"/><text x="560" y="61" fill="var(--accent)">다음 말?</text>
+        </g>
+        <text x="320" y="102" text-anchor="middle" class="t3" font-size="13" font-family="inherit">하나 맞히면 붙이고, 또 맞히고…</text>
+      </svg>
+    </div>
+  </section>
+
+  <section class="step">
+    <p class="eyebrow">이름 뜻</p>
+    <h2>L · L · M, 세 글자를 풀어 볼게요</h2>
+    <div class="art" role="img" aria-label="Large Language Model 세 글자 풀이">
+      <svg viewBox="0 0 640 170" aria-hidden="true">
+        <g font-family="inherit" text-anchor="middle">
+          <text x="107" y="62" font-size="44" font-weight="800" fill="var(--accent)">L</text>
+          <text x="107" y="96" font-size="17" font-weight="800" class="t">Large</text>
+          <text x="107" y="124" font-size="14" class="t2">아주 커요</text>
+
+          <text x="320" y="62" font-size="44" font-weight="800" fill="var(--accent)">L</text>
+          <text x="320" y="96" font-size="17" font-weight="800" class="t">Language</text>
+          <text x="320" y="124" font-size="14" class="t2">사람의 말을 다뤄요</text>
+
+          <text x="533" y="62" font-size="44" font-weight="800" fill="var(--accent)">M</text>
+          <text x="533" y="96" font-size="17" font-weight="800" class="t">Model</text>
+          <text x="533" y="124" font-size="14" class="t2">규칙을 담은 계산 덩어리</text>
+        </g>
+        <path d="M214 40 V140 M427 40 V140" stroke="var(--line)" stroke-width="2"/>
+      </svg>
+    </div>
+    <p>“크다”는 건 안에 든 <b>조절 다이얼(파라미터, parameter)</b>이 아주 많다는 뜻이에요. 읽으면서 이 다이얼을 하나씩 돌려 감을 만들어요.</p>
+    <div class="dots" id="dots"></div>
+  </section>
+
+  <section class="step">
+    <p class="eyebrow">조심할 점</p>
+    <h2>아는 게 아니라, 그럴듯한 말을 맞히는 거예요</h2>
+    <p>그래서 처음 보는 질문에도 자신 있게 틀린 답을 지어낼 수 있어요. 이걸 환각(hallucination)이라고 불러요.</p>
+    <div class="pair">
+      <div class="qa good">
+        <span class="tag">많이 본 질문</span>
+        <span class="q">한국의 수도는?</span>
+        <span class="a">서울이에요.</span>
+        <span class="why">글에서 수없이 봐서 거의 확실히 맞혀요.</span>
+      </div>
+      <div class="qa bad">
+        <span class="tag">거의 못 본 질문</span>
+        <span class="q">김철수 박사의 2019년 논문 제목은?</span>
+        <span class="a">“딥러닝 기반 … 연구”</span>
+        <span class="why">모르는데도 그럴듯한 제목을 지어내요. 중요한 건 꼭 다시 확인하세요.</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="step" id="deep">
+    <p class="eyebrow">조금 더 깊이 · 기술 흐름</p>
+    <h2>글자 하나가 나오기까지 이런 길을 지나가요</h2>
+    <p>위에서 “다음 말 맞히기”라고 한 부분을 실제 데이터 흐름으로 풀면 여섯 단계예요. 순서가 중요해서 번호를 붙였어요.</p>
+
+    <ol class="flow">
+      <li class="node">
+        <span class="n">1</span>
+        <div class="body">
+          <b>토큰화 <small>tokenizer</small></b>
+          <p>글을 모델이 아는 조각(토큰)으로 자르고 번호(ID)를 붙여요.</p>
+          <code>"오늘 아침에" → [4521, 982, 17]</code>
+        </div>
+      </li>
+      <li class="node">
+        <span class="n">2</span>
+        <div class="body">
+          <b>임베딩 <small>embedding</small></b>
+          <p>번호를 숫자 수백~수천 개짜리 목록(벡터)으로 바꿔요. 뜻이 비슷한 토큰은 가까운 자리에 놓여요.</p>
+          <code>4521 → [0.12, −0.80, 0.33, …]</code>
+        </div>
+      </li>
+      <li class="node core">
+        <span class="n">3</span>
+        <div class="body">
+          <b>트랜스포머 블록 × N층 <small>모델 본체</small></b>
+          <p>어텐션(attention)으로 “문장 속 어느 단어를 참고할지” 계산하고, 이를 수십 번 쌓아 문맥이 반영된 벡터로 만들어요. 다이얼(파라미터)이 대부분 여기에 있어요.</p>
+          <code>"그것"이 앞의 무엇을 가리키는지 파악</code>
+        </div>
+      </li>
+      <li class="node">
+        <span class="n">4</span>
+        <div class="body">
+          <b>출력 헤드 <small>logits → softmax</small></b>
+          <p>마지막 벡터를 사전 속 모든 토큰의 점수(logits)로 바꾸고, softmax로 확률이 되게 해요.</p>
+          <code>커피를 40% · 학교에 30% · 늦게 20% …</code>
+        </div>
+      </li>
+      <li class="node">
+        <span class="n">5</span>
+        <div class="body">
+          <b>선택 <small>sampling</small></b>
+          <p>확률에 따라 토큰 하나를 골라요. temperature가 높을수록 덜 확실한 토큰도 뽑아서 답이 다양해져요.</p>
+          <code>→ "커피를" (ID 7311)</code>
+        </div>
+      </li>
+      <li class="node">
+        <span class="n">6</span>
+        <div class="body">
+          <b>글자로 복원 <small>detokenize</small></b>
+          <p>고른 번호를 다시 글자로 바꿔 화면에 보여줘요.</p>
+          <code>7311 → "커피를"</code>
+        </div>
+      </li>
+    </ol>
+
+    <div class="loopnote">
+      <svg viewBox="0 0 40 40" aria-hidden="true"><path d="M30 12 A12 12 0 1 0 32 22" class="st-line" stroke="var(--accent)"/><path d="M31 6 V13 H24" class="st-line" stroke="var(--accent)"/></svg>
+      <p><b>한 번 돌 때 토큰은 딱 하나만 나와요.</b> 그 토큰을 입력 뒤에 붙여 1~6을 다시 돌려요(autoregressive). 답이 글자가 하나씩 흘러나오는 이유예요.</p>
+    </div>
+
+    <div class="pair">
+      <div class="qa bad">
+        <span class="tag">자주 하는 오해</span>
+        <span class="q">“모델을 지난 뒤에도 임베딩이야?”</span>
+        <span class="a">아니에요</span>
+        <span class="why">모델을 통과한 벡터는 은닉 상태(hidden state)라고 불러요. 입력 임베딩과는 다른 값이에요.</span>
+      </div>
+      <div class="qa good">
+        <span class="tag">정확한 순서</span>
+        <span class="q">전체를 한 줄로</span>
+        <span class="a mono">임베딩 → 모델 → 은닉 상태 → logits → 확률 → 토큰 → 글자</span>
+        <span class="why">출력 쪽은 “토큰별 점수”로 바꾸는 단계가 따로 있어요.</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="step">
+    <div class="sum">
+      <span class="eyebrow">한 줄 요약</span>
+      <p>LLM = 글을 엄청 읽고 배운, 다음 말 맞히기 선수</p>
+    </div>
+    <div class="relbox">
+      <p class="eyebrow">다음에 궁금해질 개념</p>
+      <div class="rel">
+        <span>토큰(token)</span><span>임베딩(embedding)</span><span>트랜스포머(transformer)</span>
+        <span>컨텍스트 윈도우</span><span>환각(hallucination)</span><span>파인튜닝</span>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+(function(){
+  /* 다음 말 맞히기 데모: 확률은 설명용 예시다 */
+  var TREE = {
+    start: { words:["오늘","아침에","나는"], opts:[["학교에",40],["커피를",30],["늦게",20],["고양이를",10]] },
+    "학교에": { opts:[["갔다",70],["가기 싫었다",20],["일찍 도착했다",10]] },
+    "커피를": { opts:[["마셨다",80],["쏟았다",15],["샀다",5]] },
+    "늦게": { opts:[["일어났다",60],["도착했다",30],["출발했다",10]] },
+    "고양이를": { opts:[["안았다",50],["봤다",30],["불렀다",20]] }
+  };
+  var base = ["오늘","아침에","나는"], picked = null;
+  var sentence = document.getElementById("sentence");
+  var opts = document.getElementById("opts");
+  var done = document.getElementById("done");
+  var hint = document.getElementById("hint");
+
+  function render(){
+    var html = base.map(function(w){ return '<span class="w">'+w+'</span>'; });
+    var node = null;
+    if (picked === null) node = TREE.start;
+    else if (picked.length === 1) node = TREE[picked[0]];
+    picked && picked.forEach(function(w){ html.push('<span class="w">'+w+'</span>'); });
+    if (node) html.push('<span class="blank">?</span>');
+    sentence.innerHTML = html.join(" ");
+    opts.innerHTML = "";
+    if (!node){ done.hidden = false; hint.hidden = true; return; }
+    done.hidden = true; hint.hidden = false;
+    node.opts.forEach(function(o){
+      var b = document.createElement("button");
+      b.type = "button"; b.className = "opt";
+      b.innerHTML = '<i class="bar" style="width:'+o[1]+'%"></i><span>'+o[0]+'</span><span class="pct">'+o[1]+'%</span>';
+      b.addEventListener("click", function(){ picked = (picked || []).concat([o[0]]); render(); });
+      opts.appendChild(b);
+    });
+  }
+  document.getElementById("reset").addEventListener("click", function(){ picked = null; render(); });
+  render();
+
+  /* 작은 모델 vs 큰 모델: 다이얼(점) 개수 비교. 점 하나 = 다이얼 하나를 뜻하는 그림일 뿐 실제 개수 비율이 아니다 */
+  function dots(n, cols, r, gap){
+    var rows = Math.ceil(n/cols), w = cols*gap, h = rows*gap, s = "";
+    for (var i=0;i<n;i++){
+      var x = (i%cols)*gap + gap/2, y = Math.floor(i/cols)*gap + gap/2;
+      s += '<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="var(--accent)"/>';
+    }
+    return '<svg viewBox="0 0 '+w+' '+h+'" aria-hidden="true">'+s+'</svg>';
+  }
+  document.getElementById("dots").innerHTML =
+    '<div class="dotcard"><b>작은 모델</b>'+dots(24,12,3.2,12)+'<small>다이얼 수십억 개</small></div>'+
+    '<div class="dotcard"><b>큰 모델 (LLM)</b>'+dots(360,30,3.2,12)+'<small>다이얼 수천억 개 이상</small></div>';
+})();
+</script>
+</body>
+</html>
